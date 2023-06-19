@@ -1,23 +1,26 @@
 # kind-k8s-multus-example
 
-
+## add addtra interface to container
+``` bash
 CLUSTER=demo
-
 for i in  $CLUSTER-worker $CLUSTER-worker2 $CLUSTER-control-plane
 do
 docker stop $i
 docker network connect testnet $i
 docker start $i
 done
-
+```
+## main cni plugin cilium install
+```bash
 cilium install
-
-##install multus plugin
+```
+## install multus plugin
+```bash
 kubectl apply -f https://raw.githubusercontent.com/k8snetworkplumbingwg/multus-cni/master/deployments/multus-daemonset-thick.yml
 watch "kubectl get pods --all-namespaces | grep -i multus"
-
-
-
+```
+## deploy network attachment definition with macvlan
+```bash
 cat <<EOF | kubectl create -f -
 apiVersion: "k8s.cni.cncf.io/v1"
 kind: NetworkAttachmentDefinition
@@ -86,8 +89,10 @@ spec:
       }
     }'
 EOF
+```
 
-##create two pods
+## create two pods
+```bash
 cat <<EOF | kubectl apply -f -
 apiVersion: v1
 kind: Pod
@@ -117,12 +122,16 @@ spec:
     args: ["-f", "/dev/null"]
   terminationGracePeriodSeconds: 0
 EOF
+```
 
-##verify
+## verify
+```bash
 kubectl exec -it net-pod -- ping -c 2 -I net1 172.19.9.240
-
-##issue solved
+```
+## issues "can't find macvlan plugin"
+```bash
 git clone https://github.com/containernetworking/plugins.git
 cd plugins
 ./build_linux.sh
 docker cp macvlan demo-worker:/opt/cni/bin
+```
